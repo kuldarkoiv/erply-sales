@@ -1,0 +1,35 @@
+# Keskkonnamuutujad
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtuaalkeskkonnad
+.venv/
+venv/
+env/
+ENV/
+
+# Väljundfailid – genereeritakse jooksvalt, ei kuulu repo alla
+*.xlsx
+*.csv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
