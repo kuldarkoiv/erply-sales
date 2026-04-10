@@ -113,7 +113,7 @@ def load_data() -> pd.DataFrame:
     conn = get_conn()
     try:
         df = pd.read_sql(
-            f"""
+            """
             SELECT
                 s.invoice_id,
                 s.document_date,
@@ -140,9 +140,10 @@ def load_data() -> pd.DataFrame:
             FROM public.v_erply_sales s
             LEFT JOIN public.trader_mapper_master_trader_mapper_table t
                 ON s.authorid = t.erply_author_id
-            WHERE s.document_date >= '{YEAR_START}'
+            WHERE s.document_date >= %(year_start)s
             """,
             conn,
+            params={"year_start": YEAR_START},
         )
     finally:
         conn.close()
