@@ -10,7 +10,7 @@ Käivitamine:
     python main.py
 
 Keskkonnamuutujad (.env või DO App Platform):
-    POSTGRES_HOST, POSTGRES_PORT, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
+    PG_HOST, PG_PORT, PG_USER, PG_PASSWORD, PG_DATABASE
     YEAR_START   – valikuline, vaikimisi 2026-01-01
 """
 
@@ -53,11 +53,11 @@ ALWAYS_HOOVEL = {7, 9}  # Tugevussorteeritud höövelpruss, Terrassilauad
 
 def get_conn():
     return psycopg2.connect(
-        host=os.environ.get("POSTGRES_HOST", "localhost"),
-        port=int(os.environ.get("POSTGRES_PORT", 5432)),
-        user=os.environ.get("POSTGRES_USER"),
-        password=os.environ.get("POSTGRES_PASSWORD"),
-        dbname=os.environ.get("POSTGRES_DB"),
+        host=os.environ.get("PG_HOST", "localhost"),
+        port=int(os.environ.get("PG_PORT", 5432)),
+        user=os.environ.get("PG_USER"),
+        password=os.environ.get("PG_PASSWORD"),
+        dbname=os.environ.get("PG_DATABASE"),
         sslmode="require",
     )
 
