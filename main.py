@@ -20,6 +20,8 @@ import datetime
 import psycopg2
 import psycopg2.extras
 import pandas as pd
+from sqlalchemy import create_engine, text
+from sqlalchemy.engine import URL
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -60,6 +62,18 @@ def get_conn():
         dbname=os.environ.get("PG_DATABASE"),
         sslmode="require",
     )
+
+def get_engine():
+    url = URL.create(
+        drivername="postgresql+psycopg2",
+        username=os.environ.get("PG_USER"),
+        password=os.environ.get("PG_PASSWORD"),
+        host=os.environ.get("PG_HOST", "localhost"),
+        port=int(os.environ.get("PG_PORT", 5432)),
+        database=os.environ.get("PG_DATABASE"),
+        query={"sslmode": "require"},
+    )
+    return create_engine(url)
 
 # ── ÄRIGRUPI KAARDISTUS ───────────────────────────────────────────────────────
 
@@ -110,10 +124,8 @@ def reclassify_row(row: pd.Series, varv_lookup: dict) -> str:
 # ── ANDMETE LAADIMINE ─────────────────────────────────────────────────────────
 
 def load_data() -> pd.DataFrame:
-    conn = get_conn()
-    try:
-        df = pd.read_sql(
-            """
+    engine = get_engine()
+    sql = text("""
             SELECT
                 s.invoice_id,
                 s.document_date,
@@ -140,13 +152,10 @@ def load_data() -> pd.DataFrame:
             FROM public.v_erply_sales s
             LEFT JOIN public.trader_mapper_master_trader_mapper_table t
                 ON s.authorid = t.erply_author_id
-            WHERE s.document_date >= %(year_start)s
-            """,
-            conn,
-            params={"year_start": YEAR_START},
-        )
-    finally:
-        conn.close()
+            WHERE s.document_date >= :year_start
+    """)
+    with engine.connect() as conn:
+        df = pd.read_sql(sql, conn, params={"year_start": YEAR_START})
     return df
 
 # ── KLASSIFITSEERIMINE ────────────────────────────────────────────────────────
