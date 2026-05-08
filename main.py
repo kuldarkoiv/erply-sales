@@ -115,6 +115,8 @@ def reclassify_row(row: pd.Series, varv_lookup: dict) -> str:
         return ag
     if row["product_group_id"] in ALWAYS_HOOVEL:
         return "Höövel"
+    if pd.notna(row.get("finishing")) and row.get("finishing") not in (None, ""):
+        return "Värv"
     rcs = varv_lookup.get(row["invoice_id"])
     if not rcs:
         return "Höövel"
@@ -146,6 +148,7 @@ def load_data() -> pd.DataFrame:
                 s.authorid                AS author_id,
                 s.attendant_name          AS attendant,
                 s.sold_linear_meters      AS linear_m,
+                s.finishing,
                 t.name                    AS trader,
                 t.is_export,
                 t.country                 AS market
@@ -170,6 +173,7 @@ def classify(df: pd.DataFrame) -> pd.DataFrame:
     df["is_export"] = df["is_export"].apply(
         lambda x: None if pd.isna(x) else bool(x)
     )
+    df["finishing"] = df["finishing"].replace("", None)
     return df
 
 # ── TABEL + GRANT ─────────────────────────────────────────────────────────────
@@ -199,6 +203,7 @@ CREATE TABLE IF NOT EXISTS {TARGET_TABLE} (
     is_export         BOOLEAN,
     author_id         INTEGER,
     attendant         VARCHAR,
+    finishing         VARCHAR,
     PRIMARY KEY (invoice_id, product_id)
 );
 GRANT SELECT ON {TARGET_TABLE} TO doadmin;
@@ -209,6 +214,10 @@ ALTER_COLS = [
     "linear_m", "warehouse_value", "m3_sales_price", "m3_warehouse_price",
 ]
 
+ADD_COLS = [
+    ("finishing",    "VARCHAR"),
+]
+
 def ensure_table(conn):
     with conn.cursor() as cur:
         cur.execute(DDL)
@@ -216,6 +225,15 @@ def ensure_table(conn):
             cur.execute(
                 f"ALTER TABLE {TARGET_TABLE} ALTER COLUMN {col} TYPE NUMERIC(18,4);"
             )
+        for col, col_type in ADD_COLS:
+            cur.execute(f"""
+                ALTER TABLE {TARGET_TABLE}
+                ADD COLUMN IF NOT EXISTS {col} {col_type};
+            """)
+            cur.execute(f"""
+                ALTER TABLE {TARGET_TABLE}
+                ALTER COLUMN {col} TYPE {col_type};
+            """)
     conn.commit()
 
 # ── UPSERT ────────────────────────────────────────────────────────────────────
@@ -226,6 +244,7 @@ COLS = [
     "customer", "qty", "revenue", "profit", "margin_pct",
     "m3", "linear_m", "warehouse_value", "m3_sales_price", "m3_warehouse_price",
     "trader", "market", "is_export", "author_id", "attendant",
+    "finishing",
 ]
 
 UPDATE_COLS = [c for c in COLS if c not in ("invoice_id", "product_id")]

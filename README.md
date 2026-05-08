@@ -1,3 +1,10 @@
+﻿---
+repo: erply-sales
+description: "Müügiandmete pipeline Erply → PostgreSQL"
+tags: [repo, pipeline, erply, müük]
+status: active
+---
+
 # erply-sales
 
 Automaatne müügiandmete pipeline Erply → PostgreSQL. Laeb `public.v_erply_sales` andmed, klassifitseerib ärigruppidesse ja upsertib `public.budget_erply_sales` tabelisse.
@@ -68,6 +75,7 @@ Tabel luuakse automaatselt kui see puudub. Upsert-võti: `(invoice_id, product_i
 | `is_export` | BOOLEAN | Kas eksportmüük |
 | `author_id` | INTEGER | Erply author ID |
 | `attendant` | VARCHAR | Töötaja nimi |
+| `finishing` | VARCHAR | Finishing nimetus (Erply v_erply_sales.finishing) |
 
 ---
 
@@ -86,7 +94,11 @@ Tabel luuakse automaatselt kui see puudub. Upsert-võti: `(invoice_id, product_i
 
 ### 2. Värvi rea-tasandi ümberklassifitseerimine
 
-Töötlused (grupp 21) on värvimisteenus, mis müüakse koos Höövel-materjaliga. Höövel-rida klassifitseeritakse ümber `Värv`-iks ainult siis kui:
+Töötlused (grupp 21) on värvimisteenus, mis müüakse koos Höövel-materjaliga. Höövel-rida klassifitseeritakse ümber `Värv`-iks kui **üks** järgmistest tingimustest on täidetud:
+
+**a) Finishing** – Höövel-real on `finishing` väli täidetud (v.a ALWAYS_HOOVEL erandid)
+
+**b) Ristlõige** – samal arvel (`invoice_id`) on Töötlus-rida ja ristlõiked kattuvad:
 
 1. Samal arvel (`invoice_id`) on Töötlus-rida
 2. Töötluse ristlõige (AxB enne sulgusid) = Höövel-rea ristlõige (esimene AxB nimest)
