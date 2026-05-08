@@ -218,9 +218,16 @@ ADD_COLS = [
     ("finishing",    "VARCHAR"),
 ]
 
+DROP_COLS = ["finishing_id"]
+
 def ensure_table(conn):
     with conn.cursor() as cur:
         cur.execute(DDL)
+        for col in DROP_COLS:
+            cur.execute(f"""
+                ALTER TABLE {TARGET_TABLE}
+                DROP COLUMN IF EXISTS {col};
+            """)
         for col in ALTER_COLS:
             cur.execute(
                 f"ALTER TABLE {TARGET_TABLE} ALTER COLUMN {col} TYPE NUMERIC(18,4);"
